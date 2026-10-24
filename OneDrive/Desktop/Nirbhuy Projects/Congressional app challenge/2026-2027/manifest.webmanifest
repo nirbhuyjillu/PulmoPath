@@ -1,0 +1,19 @@
+{
+  "name": "Tri-Cities AQI Guardian",
+  "short_name": "AQI Guardian",
+  "description": "Real-time air quality forecast, topo map, health advisor and evacuation routing for the Tri-Cities WA 60-mile region.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b1e2d",
+  "theme_color": "#0b1e2d",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

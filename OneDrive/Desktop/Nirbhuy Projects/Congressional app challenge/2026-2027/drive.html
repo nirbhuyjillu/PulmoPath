@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Drive · Tri-Cities AQI Guardian</title>
+<meta name="description" content="Clean-air drive routing for the Tri-Cities WA 60-mile region. Page 4 of 7." />
+<link rel="manifest" href="./manifest.webmanifest" />
+<meta name="theme-color" content="#0b1e2d" />
+<link rel="icon" href="./icon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="./styles.css" />
+<script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
+</head>
+<body>
+<div id="root"><div class="boot">Loading…</div></div>
+<header class="top pagehead">
+  <div>
+    <h1>Tri-Cities AQI Guardian</h1>
+    <div class="muted small">Page 4 of 7: Clean-air drive</div>
+  </div>
+</header>
+<div class="disclaimer">WARNING: Disclaimer: follow app recommendations at your own risk. Forecast models, not medical advice.</div>
+<nav class="pnav">
+  <a href="index.html">1 · Live forecast</a>
+  <a href="map.html">2 · Topo map</a>
+  <a href="advisor.html">3 · Health advisor</a>
+  <a href="drive.html" class="active">4 · Drive</a>
+  <a href="house.html">5 · My house</a>
+  <a href="about.html">6 · About</a>
+  <a href="scenarios.html">7 · Demo</a>
+</nav>
+<main></main>
+<script type="text/babel" data-presets="react" src="./towns.js"></script>
+<script type="text/babel" data-presets="react" src="./api.js"></script>
+<script type="text/babel" data-presets="react" src="./advisory.js"></script>
+<script type="text/babel" data-presets="react" src="./demo.js"></script>
+<script type="text/babel" data-presets="react" src="./app1.js"></script>
+<script type="text/babel" data-presets="react" src="./regression.js"></script>
+<script type="text/babel" data-presets="react" src="./drive.js"></script>
+<script>
+if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js').catch(()=>{}); }
+</script>
+</body>
+</html>

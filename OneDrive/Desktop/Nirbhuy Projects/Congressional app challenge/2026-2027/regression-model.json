@@ -1,0 +1,445 @@
+{
+  "schema_version": 1,
+  "model_type": "two-input tanh multilayer perceptron",
+  "architecture": {
+    "inputs": 2,
+    "input_features": [
+      "pm25",
+      "wind_speed_kmh"
+    ],
+    "hidden": 4,
+    "outputs": 1,
+    "hidden_activation": "tanh",
+    "output_activation": "tanh",
+    "dropout_rate": 0.2
+  },
+  "normalization": {
+    "pm25_min": 6.39,
+    "pm25_max": 99.91,
+    "wind_speed_min": 0.0,
+    "wind_speed_max": 55.0,
+    "pef_min": 250.0,
+    "pef_max": 550.0
+  },
+  "weights": {
+    "hidden_weights": [
+      [
+        0.032244492488152386,
+        0.17496891052525637
+      ],
+      [
+        -0.1777994919342923,
+        -0.4660469224987531
+      ],
+      [
+        0.014720095397651041,
+        0.22106117884090123
+      ],
+      [
+        0.20539003611864443,
+        0.020476544693357922
+      ]
+    ],
+    "hidden_biases": [
+      0.03460760445962485,
+      -0.012450457415127309,
+      0.11339450329244433,
+      0.055612096305006145
+    ],
+    "output_weights": [
+      0.025365966537278642,
+      -0.001607032573932772,
+      -0.011780767798150245,
+      -0.037278695538376844
+    ],
+    "output_bias": -0.17977559050959735
+  },
+  "training": {
+    "synthetic": true,
+    "seed": 20261023,
+    "generated_rows": 19115,
+    "subjects": 309,
+    "training_subjects": 247,
+    "testing_subjects": 62,
+    "training_rows": 15279,
+    "testing_rows": 3836,
+    "hyperparameter_selection": {
+      "method": "deterministic grid search; validation split by subject_id within outer training subjects",
+      "selection_metric": "lowest validation MAE; RMSE tie-breaker",
+      "outer_test_used_for_selection": false,
+      "candidate_count": 16,
+      "validation_subjects": 49,
+      "validation_rows": 392,
+      "selected": {
+        "hidden_size": 4,
+        "epochs": 4,
+        "learning_rate": 0.01,
+        "dropout_rate": 0.2
+      },
+      "ranked_results": [
+        {
+          "hyperparameters": {
+            "hidden_size": 4,
+            "epochs": 4,
+            "learning_rate": 0.01,
+            "dropout_rate": 0.2
+          },
+          "validation_subjects": 49,
+          "validation_rows": 392,
+          "validation_metrics": {
+            "mae_l_min_synthetic_only": 17.970570782677445,
+            "mse_l_min_squared_synthetic_only": 506.40396735393006,
+            "rmse_l_min_synthetic_only": 22.503421236646,
+            "r_squared_synthetic_only": 6.289855259633548e-06
+          }
+        },
+        {
+          "hyperparameters": {
+            "hidden_size": 2,
+            "epochs": 4,
+            "learning_rate": 0.03,
+            "dropout_rate": 0.4
+          },
+          "validation_subjects": 49,
+          "validation_rows": 392,
+          "validation_metrics": {
+            "mae_l_min_synthetic_only": 17.99445656386882,
+            "mse_l_min_squared_synthetic_only": 506.2902578791128,
+            "rmse_l_min_synthetic_only": 22.50089460175112,
+            "r_squared_synthetic_only": 0.00023083146024593937
+          }
+        },
+        {
+          "hyperparameters": {
+            "hidden_size": 2,
+            "epochs": 4,
+            "learning_rate": 0.03,
+            "dropout_rate": 0.2
+          },
+          "validation_subjects": 49,
+          "validation_rows": 392,
+          "validation_metrics": {
+            "mae_l_min_synthetic_only": 18.02819963732813,
+            "mse_l_min_squared_synthetic_only": 509.1123889463023,
+            "rmse_l_min_synthetic_only": 22.56351898411022,
+            "r_squared_synthetic_only": -0.005342018474441046
+          }
+        },
+        {
+          "hyperparameters": {
+            "hidden_size": 4,
+            "epochs": 10,
+            "learning_rate": 0.03,
+            "dropout_rate": 0.4
+          },
+          "validation_subjects": 49,
+          "validation_rows": 392,
+          "validation_metrics": {
+            "mae_l_min_synthetic_only": 18.050485841571014,
+            "mse_l_min_squared_synthetic_only": 509.72840962347107,
+            "rmse_l_min_synthetic_only": 22.577165668512755,
+            "r_squared_synthetic_only": -0.0065584718243361095
+          }
+        },
+        {
+          "hyperparameters": {
+            "hidden_size": 4,
+            "epochs": 10,
+            "learning_rate": 0.03,
+            "dropout_rate": 0.2
+          },
+          "validation_subjects": 49,
+          "validation_rows": 392,
+          "validation_metrics": {
+            "mae_l_min_synthetic_only": 18.063039498341578,
+            "mse_l_min_squared_synthetic_only": 513.383318763307,
+            "rmse_l_min_synthetic_only": 22.657963694103383,
+            "r_squared_synthetic_only": -0.013775804994303087
+          }
+        },
+        {
+          "hyperparameters": {
+            "hidden_size": 4,
+            "epochs": 4,
+            "learning_rate": 0.03,
+            "dropout_rate": 0.2
+          },
+          "validation_subjects": 49,
+          "validation_rows": 392,
+          "validation_metrics": {
+            "mae_l_min_synthetic_only": 18.06341281451336,
+            "mse_l_min_squared_synthetic_only": 511.70540153452924,
+            "rmse_l_min_synthetic_only": 22.620906293394373,
+            "r_squared_synthetic_only": -0.010462429145988494
+          }
+        },
+        {
+          "hyperparameters": {
+            "hidden_size": 2,
+            "epochs": 10,
+            "learning_rate": 0.01,
+            "dropout_rate": 0.2
+          },
+          "validation_subjects": 49,
+          "validation_rows": 392,
+          "validation_metrics": {
+            "mae_l_min_synthetic_only": 18.071110282608586,
+            "mse_l_min_squared_synthetic_only": 515.8283656017735,
+            "rmse_l_min_synthetic_only": 22.71185517745685,
+            "r_squared_synthetic_only": -0.018604028343838896
+          }
+        },
+        {
+          "hyperparameters": {
+            "hidden_size": 2,
+            "epochs": 4,
+            "learning_rate": 0.01,
+            "dropout_rate": 0.4
+          },
+          "validation_subjects": 49,
+          "validation_rows": 392,
+          "validation_metrics": {
+            "mae_l_min_synthetic_only": 18.09953538166076,
+            "mse_l_min_squared_synthetic_only": 510.5507831082355,
+            "rmse_l_min_synthetic_only": 22.59537083360739,
+            "r_squared_synthetic_only": -0.008182409165213178
+          }
+        },
+        {
+          "hyperparameters": {
+            "hidden_size": 2,
+            "epochs": 10,
+            "learning_rate": 0.01,
+            "dropout_rate": 0.4
+          },
+          "validation_subjects": 49,
+          "validation_rows": 392,
+          "validation_metrics": {
+            "mae_l_min_synthetic_only": 18.126465655099754,
+            "mse_l_min_squared_synthetic_only": 512.1277559289837,
+            "rmse_l_min_synthetic_only": 22.630239855754592,
+            "r_squared_synthetic_only": -0.01129645053036521
+          }
+        },
+        {
+          "hyperparameters": {
+            "hidden_size": 4,
+            "epochs": 10,
+            "learning_rate": 0.01,
+            "dropout_rate": 0.2
+          },
+          "validation_subjects": 49,
+          "validation_rows": 392,
+          "validation_metrics": {
+            "mae_l_min_synthetic_only": 18.211892930953933,
+            "mse_l_min_squared_synthetic_only": 516.3532414026433,
+            "rmse_l_min_synthetic_only": 22.72340734578869,
+            "r_squared_synthetic_only": -0.01964049830322634
+          }
+        },
+        {
+          "hyperparameters": {
+            "hidden_size": 4,
+            "epochs": 4,
+            "learning_rate": 0.03,
+            "dropout_rate": 0.4
+          },
+          "validation_subjects": 49,
+          "validation_rows": 392,
+          "validation_metrics": {
+            "mae_l_min_synthetic_only": 18.23138202091254,
+            "mse_l_min_squared_synthetic_only": 516.9781999516272,
+            "rmse_l_min_synthetic_only": 22.73715461423498,
+            "r_squared_synthetic_only": -0.020874601229691647
+          }
+        },
+        {
+          "hyperparameters": {
+            "hidden_size": 4,
+            "epochs": 4,
+            "learning_rate": 0.01,
+            "dropout_rate": 0.4
+          },
+          "validation_subjects": 49,
+          "validation_rows": 392,
+          "validation_metrics": {
+            "mae_l_min_synthetic_only": 18.259818516975646,
+            "mse_l_min_squared_synthetic_only": 518.1848757191792,
+            "rmse_l_min_synthetic_only": 22.76367447753502,
+            "r_squared_synthetic_only": -0.02325741861566355
+          }
+        },
+        {
+          "hyperparameters": {
+            "hidden_size": 2,
+            "epochs": 10,
+            "learning_rate": 0.03,
+            "dropout_rate": 0.2
+          },
+          "validation_subjects": 49,
+          "validation_rows": 392,
+          "validation_metrics": {
+            "mae_l_min_synthetic_only": 18.2752139985232,
+            "mse_l_min_squared_synthetic_only": 519.1595916111104,
+            "rmse_l_min_synthetic_only": 22.78507387767506,
+            "r_squared_synthetic_only": -0.025182185844882632
+          }
+        },
+        {
+          "hyperparameters": {
+            "hidden_size": 2,
+            "epochs": 4,
+            "learning_rate": 0.01,
+            "dropout_rate": 0.2
+          },
+          "validation_subjects": 49,
+          "validation_rows": 392,
+          "validation_metrics": {
+            "mae_l_min_synthetic_only": 18.338013610642523,
+            "mse_l_min_squared_synthetic_only": 521.9585791234948,
+            "rmse_l_min_synthetic_only": 22.846412828352175,
+            "r_squared_synthetic_only": -0.03070933430263123
+          }
+        },
+        {
+          "hyperparameters": {
+            "hidden_size": 4,
+            "epochs": 10,
+            "learning_rate": 0.01,
+            "dropout_rate": 0.4
+          },
+          "validation_subjects": 49,
+          "validation_rows": 392,
+          "validation_metrics": {
+            "mae_l_min_synthetic_only": 18.34334242842775,
+            "mse_l_min_squared_synthetic_only": 521.9933344658034,
+            "rmse_l_min_synthetic_only": 22.84717344587298,
+            "r_squared_synthetic_only": -0.030777965525810913
+          }
+        },
+        {
+          "hyperparameters": {
+            "hidden_size": 2,
+            "epochs": 10,
+            "learning_rate": 0.03,
+            "dropout_rate": 0.4
+          },
+          "validation_subjects": 49,
+          "validation_rows": 392,
+          "validation_metrics": {
+            "mae_l_min_synthetic_only": 18.457804067587677,
+            "mse_l_min_squared_synthetic_only": 527.4006660962133,
+            "rmse_l_min_synthetic_only": 22.965205553101704,
+            "r_squared_synthetic_only": -0.041455799760267587
+          }
+        }
+      ]
+    },
+    "epoch_history": [
+      {
+        "epoch": 1.0,
+        "training_mse": 477.4729945735149,
+        "training_r_squared": 8.336810158782182e-05,
+        "validation_mse": 513.3321668001927,
+        "validation_r_squared": -0.005126115741570736
+      },
+      {
+        "epoch": 2.0,
+        "training_mse": 477.1202874949652,
+        "training_r_squared": 0.0008220018631581727,
+        "validation_mse": 515.0647375956257,
+        "validation_r_squared": -0.008518562711562927
+      },
+      {
+        "epoch": 3.0,
+        "training_mse": 478.29606953834895,
+        "training_r_squared": -0.0016403028829290456,
+        "validation_mse": 511.34148625667524,
+        "validation_r_squared": -0.0012282789571345099
+      },
+      {
+        "epoch": 4.0,
+        "training_mse": 479.64394571742275,
+        "training_r_squared": -0.004463004532054837,
+        "validation_mse": 510.9813456590123,
+        "validation_r_squared": -0.0005231084194958768
+      }
+    ],
+    "epoch_history_note": "Per-epoch train/inner-validation curves from a subject-level split. The final outer test subjects are not charted or used for tuning.",
+    "hidden_size": 4,
+    "epochs": 4,
+    "learning_rate": 0.01,
+    "dropout_rate": 0.2,
+    "split_unit": "subject_id; no synthetic subject appears in both train and test",
+    "training_metrics": {
+      "mae_l_min_synthetic_only": 17.74579678457355,
+      "mse_l_min_squared_synthetic_only": 485.68401915686684,
+      "rmse_l_min_synthetic_only": 22.038239928743558,
+      "r_squared_synthetic_only": -0.0018739708384769571
+    },
+    "testing_metrics": {
+      "mae_l_min_synthetic_only": 20.038862155201684,
+      "mse_l_min_squared_synthetic_only": 618.7346297344466,
+      "rmse_l_min_synthetic_only": 24.87437697178457,
+      "r_squared_synthetic_only": -0.04275477985431264
+    }
+  },
+  "source": {
+    "primary_article": {
+      "citation": "Jacobson et al., Environmental Research (2012), PMID 22683314",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/22683314/",
+      "subjects": 309,
+      "observations": 19115,
+      "max_observations_per_subject": 67,
+      "pm25_min": 6.39,
+      "pm25_max": 99.91,
+      "reported_overall_pef_reduction_l_min_per_10": [
+        0.26,
+        0.38
+      ],
+      "reported_non_asthma_reduction_l_min_per_10": [
+        0.38,
+        0.53
+      ]
+    },
+    "additional_references": [
+      "https://pubmed.ncbi.nlm.nih.gov/21392385/",
+      "https://pubmed.ncbi.nlm.nih.gov/33096665/"
+    ],
+    "simulation_assumptions": {
+      "daily_exposure_generator": "AR(1) regional concentration with smooth seasonal cycle and random excursions; clipped to reported range",
+      "wind_generator": "AR(1) 10 m wind speed with range 0-55 km/h; distribution is a simulation assumption",
+      "wind_pm25_association": "Assumed weak inverse association: stagnant conditions permit local accumulation; not an effect estimate from the cited PEF article",
+      "wind_pm25_coefficient_per_kmh": -0.12,
+      "wind_speed_min_kmh": 0.0,
+      "wind_speed_max_kmh": 55.0,
+      "pm25_lag_weights": [
+        0.5,
+        0.3,
+        0.2
+      ],
+      "population_reference_pm25": 25.0,
+      "mean_pef_baseline_l_min": 375.0,
+      "sd_pef_baseline_l_min": 22.0,
+      "within_subject_residual_sd_l_min": 8.0,
+      "within_subject_residual_ar1": 0.45,
+      "individual_effect_mean_l_min_per_10": 0.32,
+      "individual_effect_sd_l_min_per_10": 0.1,
+      "effect_range_l_min_per_10": [
+        0.26,
+        0.38
+      ],
+      "pef_clipping_range_l_min": [
+        250.0,
+        550.0
+      ],
+      "asthma_subgroups": "Not generated: the article reports no significant effect in its asthma subgroup, and group sample counts/distributions are not specified here."
+    },
+    "limitations": [
+      "Rows are synthetic and do not reproduce or disclose the source study's individual observations.",
+      "The source describes a panel and effect estimates; the exposure time series, subject baselines, residuals, lag weights, and effect distribution are simulation assumptions.",
+      "Holdout metrics evaluate only the artificial simulated panel, not predictive performance in real patients.",
+      "Not for clinical decisions, treatment changes, or travel recommendations."
+    ]
+  }
+}
