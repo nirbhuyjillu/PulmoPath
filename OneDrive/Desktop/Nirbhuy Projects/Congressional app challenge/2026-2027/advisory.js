@@ -3,39 +3,24 @@
 (function () {
   function buildAdvice(o) {
     const soon = window.AqiApi.maxSoon(o.hourly, 12);
-    const dustStorm = window.AqiApi.isDustStorm(o.dustNow, o.dustHourly);
-    const blocked = dustStorm || (o.aqiNow != null && o.aqiNow > 125);
+    // Dust concentration alone cannot establish a dust storm or road safety.
+    const dustStorm = o.dustEvent === true;
+    const blocked = dustStorm;
     const out = { soon, dustStorm, blocked, steps: [], goto4: false, ask: false };
     const n = o.aqiNow;
-    if (n == null) { out.steps.push('Live AQI unavailable. Refresh to retry.'); return out; }
-    if (n <= 80) out.steps.push('AQI ' + n + ' (Good). No precautions needed.');
-    if (n > 80 && n < 101) {
-      if (soon != null && soon > 101)
-        out.steps.push('AQI ' + n + ' now, forecast to exceed 101 soon (peak ~' + soon + '): you may consider moving to a library for better air quality or switching to recirculation mode.');
-      else out.steps.push('AQI ' + n + ' (Moderate). Sensitive people should shorten prolonged outdoor exertion.');
-    }
-    if (n >= 101 && n < 150) {
-      if (o.hasCondition === null || o.hasCondition === undefined) {
-        out.steps.push('AQI ' + n + '. Do you have a lung or heart condition? Answer below.');
-        out.ask = true;
-      } else if (o.hasCondition) {
-        out.steps.push('AQI ' + n + ' with lung/heart condition: immediately switch to recirculation mode with closed windows and doors, or go to a community center or library now.');
-        if (!blocked) out.goto4 = true;
-        else out.steps.push('Going outside is NOT advised right now (dust storm or AQI >125). Shelter in place: seal windows/doors, recirculate, run purifiers/humidifiers.');
-      } else out.steps.push('AQI ' + n + '. Limit outdoor activity; keep windows closed and follow the 80-101 precautions.');
-    }
-    if (n >= 150 && n < 170) {
-      if (o.hasCondition) {
-        out.steps.push('AQI ' + n + ' with lung/heart disease: go to a library immediately or move to the closest town with acceptable AQI.');
-        if (!blocked) out.goto4 = true;
-        else out.steps.push('Going outside is NOT advised right now. Shelter in place: seal windows/doors, recirculate, purifiers/humidifiers on.');
-      } else out.steps.push('AQI ' + n + '. Follow the 101-150 sensitive-group protocol: limit outdoor activity and recirculate indoor air.');
-    }
-    if (n >= 170) {
-      out.steps.push('AQI ' + n + ' (very unhealthy). Everyone should move to a zone with more acceptable AQI.');
-      if (!blocked) out.goto4 = true;
-      else out.steps.push('Travel is unsafe right now. Seal the home, recirculate, purifiers + humidifiers on max until safe to move.');
-    }
+    if (n == null || !Number.isFinite(n)) { out.steps.push('Air-quality data is unavailable. Refresh to retry. In the meantime, follow local air-quality alerts and your care plan.'); return out; }
+    out.steps.push('AQI ' + n + ': ' + window.Towns.aqiLabel(n) + '.');
+    if (n <= 50) out.steps.push('Air quality is generally satisfactory. Pay attention to symptoms and follow your usual care plan.');
+    else if (n <= 100) out.steps.push('Most people can continue usual activities. People unusually sensitive to air pollution should consider shorter or less intense outdoor activity.');
+    else if (n <= 150) out.steps.push('Sensitive groups should reduce prolonged or heavy outdoor exertion, take breaks, and watch for symptoms.');
+    else if (n <= 200) out.steps.push('Everyone should reduce prolonged or heavy outdoor exertion. Sensitive groups should avoid it and choose cleaner indoor air.');
+    else if (n <= 300) out.steps.push('Everyone should avoid prolonged or heavy outdoor exertion. Sensitive groups should avoid outdoor physical activity.');
+    else out.steps.push('Avoid outdoor physical activity. Stay in cleaner indoor air and follow official emergency guidance.');
+    if (o.hasCondition === true) out.steps.push('With a heart or lung condition, follow your clinician-provided action plan and keep prescribed medicines available. Contact your care team if symptoms develop or worsen.');
+    if (o.hasCondition == null && n > 100) out.steps.push('Children, older adults, pregnant people, and people with heart or lung disease may need extra precautions.');
+    if (soon != null && soon > n && soon > 100) out.steps.push('Air quality may worsen over the next 12 hours, with a forecast peak AQI of ' + soon + '. Plan outdoor activities for a cleaner time.');
+    if (n > 100) out.steps.push('During smoke, keep windows closed if it is safe to do so, use recirculation, and run a suitable air cleaner. Avoid overheating. Check for an officially designated cleaner-air space if your indoor air is poor.');
+    if (dustStorm) out.steps.push('This scenario includes blowing dust. Stay indoors where possible and check official visibility and road alerts; the app cannot assess travel safety.');
     return out;
   }
   window.Advisory = { buildAdvice };

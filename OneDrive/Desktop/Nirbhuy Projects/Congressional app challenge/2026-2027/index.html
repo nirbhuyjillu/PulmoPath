@@ -1,46 +1,20 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>Live forecast · Tri-Cities AQI Guardian</title>
-<meta name="description" content="Real-time air quality forecast for the Tri-Cities WA 60-mile region. Page 1 of 7." />
-<link rel="manifest" href="./manifest.webmanifest" />
-<meta name="theme-color" content="#0b1e2d" />
+<html lang="en"><head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Live forecast | Pulmopath: Personalized Driving Routes to Cleaner Air for People with Asthma</title>
+<meta name="description" content="Local air-quality forecasts and practical guidance for Tri-Cities, Washington." />
+<meta name="theme-color" content="#12645d" /><link rel="manifest" href="./manifest.webmanifest" />
 <link rel="icon" href="./icon.svg" type="image/svg+xml" />
-<link rel="stylesheet" href="./styles.css" />
+<link rel="stylesheet" href="./styles.css" /><link rel="stylesheet" href="./guardian.css" />
 <script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
-</head>
-<body>
-<div id="root"><div class="boot">Loading Tri-Cities AQI Guardian…</div></div>
-<header class="top pagehead">
-  <div>
-    <h1>Tri-Cities AQI Guardian</h1>
-    <div class="muted small">60-mile radius · live US AQI · Page 1 of 7: Live forecast</div>
-  </div>
-  <div class="pill" id="housepill">House: not set</div>
-</header>
-<div class="disclaimer">WARNING: Disclaimer: follow app recommendations at your own risk. Forecast models, not medical advice.</div>
-<nav class="pnav">
-  <a href="index.html" class="active">1 · Live forecast</a>
-  <a href="house.html">2 · My house</a>
-  <a href="map.html">3 · Topo map</a>
-  <a href="advisor.html">4 · Health advisor</a>
-  <!-- <a href="drive.html">4 · Drive</a> -->
-  <a href="regression.html">5 · Driving Route Advisor</a>
-  <a href="about.html">6 · About: How the app works</a>
-</nav>
-<main></main>
-<script type="text/babel" data-presets="react" src="./towns.js"></script>
-<script type="text/babel" data-presets="react" src="./api.js"></script>
-<script type="text/babel" data-presets="react" src="./advisory.js"></script>
-<script type="text/babel" data-presets="react" src="./demo.js"></script>
+<script src="./towns.js"></script><script src="./demo.js"></script><script src="./api.js"></script><script src="./advisory.js"></script>
+</head><body>
+<div id="app-shell"></div><script src="./shell.js"></script>
+<main id="main-content" class="page-main" tabindex="-1"><div id="root"><p class="boot" role="status">Loading live forecast...</p></div>
+<noscript>Enable JavaScript to use the forecast and interactive guidance.</noscript></main>
+<footer class="site-footer"><strong>Forecasts, not medical advice.</strong> Follow local air-quality alerts and your care plan. This app cannot determine whether travel is safe. <a href="about.html">Data sources and limitations</a></footer>
 <script type="text/babel" data-presets="react" src="./app1.js"></script>
-<script type="text/babel" data-presets="react" src="./home.js"></script>
-<script>
-if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js').catch(()=>{}); }
-</script>
-</body>
-</html>
+<script type="text/babel" data-presets="react" src="./forecast.js"></script>
+</body></html>

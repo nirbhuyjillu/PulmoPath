@@ -1,4 +1,4 @@
-# Help Me — Tri-Cities AQI Guardian
+# Help Me — Particulate-matter Landscape Understanding and Measurement Route-identification app (PLUMEr)
 
 > A Congressional App Challenge entry: a 4-screen air-quality assistant for the
 > Tri-Cities, WA 60-mile region. Open `index.html` in any browser to run it.

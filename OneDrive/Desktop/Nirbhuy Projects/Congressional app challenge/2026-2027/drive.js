@@ -139,13 +139,12 @@ function Drive() {
   const effHouse = Demo.applyToHouse(house, demo) || house;
   const effTowns = Demo.applyToTowns(towns, demo) || towns;
   const origin = effHouse ? { lat: effHouse.lat, lon: effHouse.lon, label: effHouse.label } : { lat: T.CENTER.lat, lon: T.CENTER.lon, label: 'Tri-Cities, WA' };
-  const originAqi = effHouse ? effHouse.aqi : null;
   const clean = useMemo(() => effTowns.filter((t) => t.now != null && t.now < 101).sort((a, b) => a.now - b.now), [effTowns]);
   // Sort by combined score: distance + PM2.5 penalty
   // Prioritize cleanest air while keeping reasonable distance
   const bestDest = useMemo(() => {
     if (!clean.length) return null;
-    
+
     // Score: distance (miles) + (PM2.5 in μg/m³) * 2.0
     // Lower score = better destination
     // PM2.5 weighted ~2x to prioritize clean air while still considering distance
@@ -154,7 +153,7 @@ function Drive() {
       d: T.haversineMiles(origin.lat, origin.lon, t.lat, t.lon),
       score: t.d + (t.now ?? 0) * 2.0
     }));
-    
+
     scored.sort((a, b) => a.score - b.score);
     return scored[0];
   }, [clean, origin.lat, origin.lon]);
@@ -270,7 +269,11 @@ function Drive() {
           <div className="row wrap">
             <label className="lbl">Destination:</label>
             <select className="input" value={dest ? dest.name : ''} onChange={(e) => plan(bestDest)}>
-              {clean.slice(0, 8).map((t) => <option key={t.name} value={t.name}>{t.name} - AQI {t.now} - {t.d.toFixed(0)} mi</option>)}
+              {clean.slice(0, 8).map((t) => (
+                <option key={t.name} value={t.name}>
+                  {t.name} - AQI {t.now} - {t.d.toFixed(0)} mi
+                </option>
+              ))}
             </select>
             <button className="btn" onClick={() => dest && plan(dest)} disabled={busy}>{busy ? 'Routing...' : 'Re-route'}</button>
           </div>

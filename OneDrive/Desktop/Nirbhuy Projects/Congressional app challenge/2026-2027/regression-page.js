@@ -1,4 +1,4 @@
-(async function () {
+﻿(async function () {
   'use strict';
 
   const T = window.Towns;
@@ -17,8 +17,9 @@
   const findRouteButton = document.getElementById('find-route');
   const routeStatus = document.getElementById('route-status');
   const routeResult = document.querySelector('.route-output .route-result');
+  const pefWarning = document.getElementById('pef-health-warning');
   const inputError = document.getElementById('input-error');
-  if (modelStatus) modelStatus.textContent = 'Loading trained tanh model…';
+  if (modelStatus) modelStatus.textContent = 'Loading educational model...';
   let artifact;
   try {
     artifact = await Model.load();
@@ -38,11 +39,38 @@
   let startingWindSpeed = null;
   let refreshing = false;
   let routeCompleted = false;
+  let bestDestination = null;
+  let dataRequest = 0, routeRequest = 0, routing = false;
+  let inputMode = 'live';
+  let liveInputs = null;
+  function syncScenarioInputs() {
+    const mode = window.Demo.getMode();
+    const scenario = window.Demo.SCEN.find(s => s.id === mode);
+    if (mode !== inputMode) {
+      if (mode !== 'live') {
+        if (inputMode === 'live') liveInputs = { best: personalBestInput.value, current: currentPEFInput.value };
+        personalBestInput.value = String(scenario.personalBest);
+        currentPEFInput.value = String(scenario.currentPEF);
+      } else {
+        personalBestInput.value = liveInputs?.best || '';
+        currentPEFInput.value = liveInputs?.current || '';
+        liveInputs = null;
+      }
+      inputMode = mode;
+    }
+    const demo = mode !== 'live';
+    const note = document.getElementById('demo-model-note');
+    note.hidden = !demo;
+    note.textContent = demo ? `${scenario.label}: sample personal best ${scenario.personalBest} L/min and current PEF ${scenario.currentPEF} L/min. These are fictional demonstration inputs, not estimates of your health. You can edit them; changing scenario resets the samples. Returning to live restores your previous inputs on this page. ${scenario.dustEvent ? 'This scenario includes blowing dust; check official visibility and road alerts. ' : ''}Driving times, if available, come from the real route service.` : '';
+    setText('personal-best-label', demo ? 'Sample personal-best PEF' : 'Personal-best PEF');
+    setText('current-pef-label', demo ? 'Sample current PEF' : "Patient's current PEF");
+    setText('conditions-source', demo ? `Simulated AQI, PM2.5 and wind for ${scenario.label}. The same location has the same demo readings on Live forecast and Health advisor.` : 'Current PM2.5 and wind are supplied by Open-Meteo Air Quality and Weather.');
+  }
 
   const training = artifact.training;
   const tuning = training.hyperparameter_selection;
   if (modelStatus) {
-    modelStatus.textContent = `Tuned tanh · ${tuning.candidate_count} configs · ${Math.round(tuning.selected.dropout_rate * 100)}% dropout · ${training.training_subjects}/${training.testing_subjects} synthetic subjects train/test`;
+    modelStatus.textContent = 'Educational model ready / not clinically validated';
     modelStatus.title = `Article-pattern simulation based on Jacobson et al. (PMID 22683314); ${training.generated_rows} synthetic repeated measurements. Holdout metrics are for simulated subjects only, not clinical validation.`;
   }
   setText('model-pm25-range', `${artifact.normalization.pm25_min.toFixed(1)}–${artifact.normalization.pm25_max.toFixed(1)}`);
@@ -139,11 +167,14 @@
 
   function validPositiveInput(input) {
     const value = Number(input.value);
-    return input.value.trim() && Number.isFinite(value) && value > 0 ? value : null;
+    return input.value.trim() !== '' && Number.isFinite(value) && value >= 1 && value <= 1000 && input.validity.valid ? value : null;
   }
 
   function setRouteMessage(message) {
+    window.RouteActions.reset();
     routeCompleted = false;
+    bestDestination = null;
+    if (pefWarning) pefWarning.hidden = true;
     routeStatus.textContent = message;
     routeStatus.hidden = false;
     routeResult.hidden = true;
@@ -154,13 +185,14 @@
       validPositiveInput(currentPEFInput) !== null;
     const originConditionsAvailable = Number.isFinite(startingPM25) && Number.isFinite(startingWindSpeed);
     findRouteButton.disabled = !bothInputsValid || !liveCities.length ||
-      !originConditionsAvailable || refreshing;
+      !originConditionsAvailable || refreshing || routing;
+    if (routing || refreshing) return;
     if (routeCompleted && bothInputsValid && originConditionsAvailable && !refreshing) {
       return;
     }
     if (!bothInputsValid) {
       inputError.textContent = personalBestInput.value || currentPEFInput.value
-        ? 'Enter positive values for both PEF measurements.'
+        ? 'Enter whole-number measurements between 1 and 1,000 L/min.'
         : '';
       inputError.hidden = !inputError.textContent;
       setRouteMessage('Enter the personal-best and current PEF measurements to compare routes.');
@@ -168,14 +200,14 @@
       inputError.textContent = '';
       inputError.hidden = true;
       if (!liveCities.length) {
-        setRouteMessage('Live city PM2.5 readings are not available yet. Try again shortly.');
+        setRouteMessage('Nearby readings are unavailable. Use Refresh conditions to retry.');
       } else if (startingPM25 === null || startingWindSpeed === null) {
         setRouteMessage('Nearby readings loaded, but current PM2.5 or wind speed at the starting location is unavailable.');
       } else if (startingPM25 < artifact.normalization.pm25_min ||
           startingPM25 > artifact.normalization.pm25_max ||
           startingWindSpeed < artifact.normalization.wind_speed_min ||
           startingWindSpeed > artifact.normalization.wind_speed_max) {
-        setRouteMessage(`Ready to compare cities. An origin input is outside model support; inference will saturate at the boundary (PM2.5 ${artifact.normalization.pm25_min.toFixed(1)}–${artifact.normalization.pm25_max.toFixed(1)} μg/m³; wind ${artifact.normalization.wind_speed_min.toFixed(0)}–${artifact.normalization.wind_speed_max.toFixed(0)} km/h), not extrapolate.`);
+        setRouteMessage('Ready to compare cities. Current conditions fall outside the experimental model range; estimates will be limited to that range and are especially uncertain.');
       } else {
         setRouteMessage(`Ready to compare ${liveCities.length} nearby city readings. Starting conditions at ${origin.label}: PM2.5 ${startingPM25.toFixed(1)} μg/m³, wind ${startingWindSpeed.toFixed(1)} km/h.`);
       }
@@ -216,7 +248,7 @@
     try {
       const saved = JSON.parse(localStorage.getItem('aqi-house') || 'null');
       if (saved && Number.isFinite(Number(saved.lat)) && Number.isFinite(Number(saved.lon))) {
-        return { lat: Number(saved.lat), lon: Number(saved.lon), label: saved.label || 'Saved home location' };
+        return { lat: Number(saved.lat), lon: Number(saved.lon), label: /\(-?\d+\.\d+,/.test(saved.label) ? 'Your selected location' : saved.label || 'Your selected location' };
       }
     } catch (error) {
       // Ignore invalid local storage and use the app's default region center.
@@ -229,28 +261,45 @@
   }
 
   async function refreshLiveData() {
-    if (refreshing) return;
+    window.RouteActions.resetLibrary();
+    syncScenarioInputs();
+    const request = ++dataRequest;
+    ++routeRequest; routing = false; routeCompleted = false;
     refreshing = true;
-    dataStatus.textContent = 'Refreshing Open-Meteo readings…';
+    liveCities = []; startingPM25 = null; startingWindSpeed = null;
+    renderCityList();
+    originPM25Label.textContent = 'Checking starting air quality...';
+    originWindLabel.textContent = 'Checking wind...';
+    cityCount.textContent = '--'; updatedTime.textContent = 'Updating...';
+    routeResult.hidden = true;
+    findRouteButton.textContent = 'Compare nearby cities';
+    setRouteMessage('Updating nearby conditions...');
+    dataStatus.textContent = window.Demo.getMode() === 'live' ? 'Refreshing forecast...' : 'Applying demo conditions...';
     findRouteButton.disabled = true;
     try {
-      liveCities = await API.fetchTownAQIs(towns);
+      const fetched = await API.fetchTownAQIs(towns);
+      if (request !== dataRequest) return;
+      liveCities = fetched;
       origin = getSavedOrigin();
       const savedHome = origin.label !== 'Tri-Cities, WA (default origin)';
       if (savedHome) {
         try {
           const point = await API.fetchPointAQI(origin.lat, origin.lon);
+          if (request !== dataRequest) return;
           startingPM25 = point.pm25;
           startingWindSpeed = point.windSpeed;
         } catch (error) {
+          if (request !== dataRequest) return;
           startingPM25 = null;
           startingWindSpeed = null;
         }
         if (startingWindSpeed == null) {
           try {
             const wind = await API.fetchPointWindSpeed(origin.lat, origin.lon);
+            if (request !== dataRequest) return;
             startingWindSpeed = wind.windSpeed;
           } catch (error) {
+            if (request !== dataRequest) return;
             startingWindSpeed = null;
           }
         }
@@ -273,15 +322,20 @@
         : `Origin wind: ${Number(startingWindSpeed).toFixed(1)} km/h`;
       const time = liveCities.find((city) => city.time)?.time;
       updatedTime.textContent = time ? `updated ${time}` : 'just updated';
-      dataStatus.textContent = `Live · ${available} PM2.5 + wind pairs`;
+      const scenario = window.Demo.SCEN.find(s => s.id === window.Demo.getMode());
+      dataStatus.textContent = `${scenario.id === 'live' ? 'Forecast' : 'Simulated: ' + scenario.label} / ${available} towns with air and wind data`;
+      setText('origin-label', 'Starting location: ' + origin.label);
       renderCityList();
       updateButtonState();
     } catch (error) {
-      dataStatus.textContent = 'Live data unavailable';
-      setRouteMessage(`Could not load Open-Meteo city readings. ${error.message || 'Check the connection and try again.'}`);
+      if (request !== dataRequest) return;
+      dataStatus.textContent = 'Conditions unavailable';
+      setRouteMessage('Could not load nearby conditions. Check your connection and use Refresh conditions to retry.');
     } finally {
-      refreshing = false;
-      updateButtonState();
+      if (request === dataRequest) {
+        refreshing = false; updateButtonState();
+        if (window.Demo.getMode() !== 'live' && !findRouteButton.disabled) compareCities(false);
+      }
     }
   }
 
@@ -296,6 +350,9 @@
   }
 
   function showBestMatch(city, personalBest, currentPEF, threshold, route) {
+    const scenario = window.Demo.SCEN.find(s => s.id === window.Demo.getMode());
+    setText('result-source', scenario.id === 'live' ? 'Comparison uses Open-Meteo conditions and your entered measurements.' : `Demo result: ${scenario.label}. Simulated air and wind; sample PEF inputs. Not a personal health prediction.${scenario.dustEvent ? ' Blowing dust is simulated; this route does not establish travel safety.' : ''}`);
+    routeResult.dataset.scenario = scenario.id;
     const pm25 = Number(city.pm25);
     setOutput('destination-name', city.name);
     setOutput(['destination-pm25', 'destination-pm25-alt'], `${pm25.toFixed(1)} μg/m³`);
@@ -307,15 +364,20 @@
     if (supportNote) {
       supportNote.hidden = !city.supportAdjusted;
       supportNote.textContent = city.supportAdjusted
-      ? `Boundary-saturated estimate: at least one live PM2.5/wind value was outside the synthetic model range. The model used the nearest boundary value (PM2.5 ${artifact.normalization.pm25_min.toFixed(1)}–${artifact.normalization.pm25_max.toFixed(1)} μg/m³; wind ${artifact.normalization.wind_speed_min.toFixed(0)}–${artifact.normalization.wind_speed_max.toFixed(0)} km/h). Treat this city ranking as highly uncertain; it is not a health or travel recommendation.`
+      ? `Boundary-saturated estimate: at least one PM2.5/wind value was outside the synthetic model range. The model used the nearest boundary value (PM2.5 ${artifact.normalization.pm25_min.toFixed(1)}–${artifact.normalization.pm25_max.toFixed(1)} μg/m³; wind ${artifact.normalization.wind_speed_min.toFixed(0)}–${artifact.normalization.wind_speed_max.toFixed(0)} km/h). Treat this city ranking as highly uncertain; it is not a health or travel recommendation.`
       : '';
     }
-    setOutput(['route-duration', 'route-duration-alt'], `${Math.round(route.minutes)} min`);
-    setOutput(['route-distance', 'route-distance-alt'], `${route.km.toFixed(1)} km`);
+    const pefAdvice = document.getElementById('pef-advice') ||
+      document.getElementById('pef-advice-alt');
+    if (pefAdvice) {
+      pefAdvice.hidden = false;
+      pefAdvice.textContent = 'A modeled peak-flow change is not a prediction of your response to travel. Follow your prescribed action plan. If breathing worsens, seek medical care rather than relying on a destination estimate.';
+    }
+    setOutput(['route-duration', 'route-duration-alt'], route ? `${Math.round(route.minutes)} min` : 'Unavailable');
+    setOutput(['route-distance', 'route-distance-alt'], route ? `${(route.km * .621371).toFixed(1)} mi` : 'Unavailable');
     setOutput('pm25-trend', city.supportAdjusted ? 'Boundary adjusted' : 'Within training range');
 
-    const directions = document.getElementById('map-route') || document.getElementById('map-route-alt');
-    if (directions) directions.href = API.googleMapsLink(origin, city);
+    window.RouteActions.setDestination(origin, city, route);
     if (routeStatus) routeStatus.hidden = true;
     if (routeResult) routeResult.hidden = false;
     routeCompleted = true;
@@ -326,15 +388,18 @@
   }
 
   personalBestInput.addEventListener('input', () => {
+    ++routeRequest; routing = false; findRouteButton.textContent = 'Compare nearby cities';
     routeCompleted = false;
     updateButtonState();
   });
   currentPEFInput.addEventListener('input', () => {
+    ++routeRequest; routing = false; findRouteButton.textContent = 'Compare nearby cities';
     routeCompleted = false;
     updateButtonState();
   });
 
-  findRouteButton.addEventListener('click', async () => {
+  async function compareCities(scroll = true) {
+    if (refreshing || routing) return;
     const personalBest = validPositiveInput(personalBestInput);
     const currentPEF = validPositiveInput(currentPEFInput);
     if (!personalBest || !currentPEF || startingPM25 == null || startingWindSpeed == null) {
@@ -342,42 +407,128 @@
       return;
     }
 
+    play_audio(currentPEF, personalBest);
+
+    if (currentPEF < personalBest * 0.5) {
+      // PEF below 50% of personal best: collapse town recommendations and
+      // show an emergency warning box instead of any travel advice.
+      routeCompleted = false;
+      bestDestination = null;
+      routeResult.hidden = true;
+      routeStatus.hidden = true;
+      const warning = document.getElementById('pef-health-warning');
+      if (warning) {
+        warning.hidden = false;
+        const warningText = warning.querySelector('.warning-text');
+        if (warningText) warningText.textContent = 'Do NOT drive to another location now. Call 911 immediately and go to the nearest emergency room.';
+      }
+      findRouteButton.textContent = 'Compare nearby cities';
+      findRouteButton.disabled = refreshing || !validPositiveInput(personalBestInput) || !validPositiveInput(currentPEFInput);
+      return;
+    }
+    if (currentPEF > personalBest * 0.8) {
+      const message = 'Your peak flow is >80% of your personal best. If you are currently experiencing symptoms, consult with your physician.';
+      if (pefWarning) pefWarning.hidden = true;
+      routeResult.hidden = true;
+      routeStatus.hidden = false;
+      routeStatus.textContent = message;
+      routeCompleted = false;
+      bestDestination = null;
+      findRouteButton.textContent = 'Compare nearby cities';
+      findRouteButton.disabled = refreshing || !validPositiveInput(personalBestInput) || !validPositiveInput(currentPEFInput);
+      return;
+    }
+    if (pefWarning) pefWarning.hidden = true;
     const rankedCandidates = Model.rankCities(
       artifact, liveCities, currentPEF, personalBest, startingPM25, startingWindSpeed
     );
     const candidates = rankedCandidates
       .map((city) => ({ ...city, dist: distanceFromOrigin(city) }))
       .filter((city) => city.dist > 1)
-      .sort((a, b) => a.gap - b.gap || a.dist - b.dist || a.pm25 - b.pm25);
+      .sort((a, b) => Number(a.pm25) - Number(b.pm25) || a.dist - b.dist || a.gap - b.gap);
     if (!candidates.length) {
       const hasComparableCandidate = liveCities.some((city) =>
         city.pm25 != null && Number.isFinite(Number(city.pm25)) &&
         city.windSpeed != null && Number.isFinite(Number(city.windSpeed)) &&
-        Number(city.pm25) <= startingPM25 && distanceFromOrigin(city) > 1
+        Number(city.pm25) < startingPM25 && distanceFromOrigin(city) > 1
       );
       if (hasComparableCandidate) {
-        setRouteMessage('Nearby cleaner/equal-PM2.5 cities exist, but the model could not produce a finite PEF estimate. No destination is recommended.');
+        setRouteMessage('Nearby cleaner PM2.5 cities exist, but the model could not produce a finite PEF estimate. No destination is recommended.');
       } else {
-        setRouteMessage('No nearby city has both live PM2.5 and wind readings at or below the starting PM2.5. The app will not suggest a destination with worse air.');
+        setRouteMessage('No nearby city has both PM2.5 and wind readings below the starting PM2.5. The app will not suggest a destination with worse air.');
       }
       return;
     }
 
     const best = candidates[0];
+    bestDestination = best;
+    const request = ++routeRequest;
+    routing = true;
     findRouteButton.disabled = true;
     findRouteButton.textContent = 'Finding driving route…';
-    setRouteMessage(`Best modeled PM2.5 match: ${best.name}. Calculating driving route from ${origin.label}…`);
+    // Show the scenario comparison immediately; a slow router must not hide it.
+    showBestMatch(best, personalBest, currentPEF, personalBest * 0.8, null);
+    routeStatus.hidden = false;
+    routeStatus.textContent = `Comparison ready. Checking driving time from ${origin.label} to ${best.name}...`;
     try {
+      const departure = Date.now();
       const route = await API.fastestRoute(origin, best);
+      if (request !== routeRequest) return;
       showBestMatch(best, personalBest, currentPEF, personalBest * 0.8, route);
+      await window.RouteActions.checkArrival(best, route, departure);
     } catch (error) {
-      setRouteMessage(`The best modeled match is ${best.name} at ${Number(best.pm25).toFixed(1)} μg/m³, but the driving route service failed: ${error.message || 'unknown error'}.`);
+      if (request !== routeRequest) return;
+      showBestMatch(best, personalBest, currentPEF, personalBest * 0.8, null);
+      routeStatus.hidden = false;
+      routeStatus.textContent = 'Comparison complete. Driving time is unavailable; directions require an internet connection. Check official travel alerts.';
     } finally {
-      findRouteButton.textContent = 'Check live cities and find route';
-      updateButtonState();
+      if (request === routeRequest) {
+        routing = false;
+        findRouteButton.textContent = 'Compare nearby cities';
+        findRouteButton.disabled = refreshing || !validPositiveInput(personalBestInput) || !validPositiveInput(currentPEFInput);
+        if (scroll) document.querySelector('.route-output').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     }
-  });
+  }
+  findRouteButton.addEventListener('click', () => compareCities());
+
+  const chooseTown = document.getElementById('choose-town');
+  if (chooseTown) {
+    chooseTown.addEventListener('click', () => {
+      if (bestDestination && origin) {
+        const link = API.googleMapsLink(bestDestination, origin);
+        window.open(link, '_blank', 'noopener,noreferrer');
+      } else {
+        setRouteMessage('Compare nearby cities first to get a recommended destination.');
+      }
+    });
+  }
+
+  const chooseLibrary = document.getElementById('choose-library');
+  if (chooseLibrary) {
+    chooseLibrary.addEventListener('click', async () => {
+      chooseLibrary.disabled = true;
+      chooseLibrary.setAttribute('aria-expanded', 'true');
+      const panel = document.getElementById('library-panel');
+      if (panel) panel.hidden = false;
+      try {
+        await window.RouteActions.searchAndOpenLibraryDirections();
+      } catch (error) {
+        setRouteMessage('Library search unavailable. Check your connection and try again.');
+      } finally {
+        chooseLibrary.disabled = false;
+      }
+    });
+  }
 
   refreshLiveData();
+  window.addEventListener('aqi:modechange', refreshLiveData);
+  document.getElementById('refresh-conditions').addEventListener('click', refreshLiveData);
+  window.GuardianSpeech = () => 'Educational route comparison, not medical or travel advice. ' +
+    (personalBestInput.value ? 'Personal best ' + personalBestInput.value + ' liters per minute. ' : '') +
+    (currentPEFInput.value ? 'Current peak flow ' + currentPEFInput.value + ' liters per minute. ' : '') +
+    dataStatus.textContent + '. Starting location: ' + origin.label + '. ' +
+    (routeResult.hidden ? routeStatus.textContent : routeResult.innerText + (routeStatus.hidden ? '' : '. ' + routeStatus.textContent)) + '. ' + document.querySelector('.next-steps').innerText;
+  window.addEventListener('storage', e => { if (e.key === 'aqi-house' || e.key === null) refreshLiveData(); });
   window.setInterval(refreshLiveData, 15 * 60 * 1000);
 })();

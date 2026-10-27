@@ -99,7 +99,7 @@
     if (![current, personalBest, start, startWind].every(Number.isFinite) || threshold <= 0) return [];
 
     return cities
-      .filter((city) => city.pm25 != null && Number.isFinite(Number(city.pm25)) && Number(city.pm25) <= start)
+      .filter((city) => city.pm25 != null && city.windSpeed != null && Number.isFinite(Number(city.windSpeed)) && Number.isFinite(Number(city.pm25)) && Number(city.pm25) < start)
       .map((city) => {
         const modeledPEF = estimatePEFChange(
           artifact, current, start, startWind, city.pm25, city.windSpeed
@@ -121,8 +121,21 @@
         };
       })
       .filter(Boolean)
-      .sort((a, b) => a.gap - b.gap || Number(a.pm25) - Number(b.pm25));
+      // Rank by air-quality improvement first: a city with cleaner air (lower PM2.5)
+      // always ranks above one with worse air, even if the worse-air city's modeled
+      // PEF happens to land closer to the threshold.  Among cities with similar
+      // PM2.5, prefer the one whose modeled PEF is closest to the threshold.
+      .sort((a, b) => Number(a.pm25) - Number(b.pm25) || a.gap - b.gap);
   }
 
   window.PEFNeuralModel = Object.freeze({ load, predictPEF, estimatePEFChange, rankCities });
 })();
+
+function play_audio(CurrentPEF, PersonalBestPEF) {
+  if (CurrentPEF < PersonalBestPEF * 0.8) {
+    const audio = new Audio('WhatsApp Audio 2026-10-24 at 6.02.56 PM.mp3');
+    audio.play().catch(() => {});
+  }
+}
+window.play_audio = play_audio;
+

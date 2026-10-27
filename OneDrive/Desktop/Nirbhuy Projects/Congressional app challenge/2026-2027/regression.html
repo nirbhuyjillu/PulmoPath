@@ -3,68 +3,63 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PEF &amp; PM2.5 Route Explorer</title>
+  <meta name="theme-color" content="#ffffff" />
+  <title>Driving route advisor | Pulmopath: When the Air Turns Unhealthy, Find a Cleaner Path.</title>
   <meta name="description" content="Explore live nearby PM2.5 data and compare modeled PEF scenarios with a patient's personal best." />
   <link rel="stylesheet" href="./styles.css" />
   <link rel="stylesheet" href="./regression.css?v=epoch-curves-1" />
+  <link rel="stylesheet" href="./guardian.css" />
+  <link rel="manifest" href="./manifest.webmanifest" />
   <script src="./towns.js" defer></script>
-  <script src="./api.js?v=wind-covariate-1" defer></script>
+  <script src="./demo.js" defer></script>
+  <script src="./api.js?v=library-search-2" defer></script>
+  <script src="./shell.js" defer></script>
   <script src="./regression.js?v=pm25-wind-2" defer></script>
+  <script src="./route-actions.js" defer></script>
   <script src="./regression-page.js" defer></script>
 </head>
 <body class="reg-page">
-  <header class="top pagehead reg-header">
-    <div>
-      <p class="eyebrow">AIR QUALITY · EXPLORATORY MODEL</p>
-      <h1>PEF &amp; PM2.5 Route Explorer</h1>
-      <p class="muted">Compare live PM2.5 across nearby cities with a measured PEF and personal best.</p>
-    </div>
-    <div class="header-statuses">
-      <span id="model-status" class="live-status model-status" role="status">Loading tuned PM2.5 + wind model…</span>
-      <span id="data-status" class="live-status" role="status">Loading Open-Meteo city data…</span>
-    </div>
-  </header>
-  <nav class="pnav" aria-label="Main navigation">
-    <a href="index.html">Live forecast</a>
-    <a href="map.html">Topo map</a>
-    <a href="advisor.html">Health advisor</a>
-    <a href="drive.html">Drive</a>
-    <a href="house.html">My house</a>
-    <a href="about.html">About</a>
-    <a href="scenarios.html">Demo</a>
-  </nav>
-
-  <main class="reg-container">
+  <div id="app-shell"></div>
+  <main id="main-content" class="page-main" tabindex="-1">
+    <h1>Explore cleaner-air destinations.</h1>
+    <p class="page-intro">Compare nearby conditions and an experimental peak-flow model. A modeled match is not a medical recommendation or a reason to travel.</p>
+    <div class="row wrap small muted"><span id="model-status" role="status">Loading educational model...</span><span id="data-status" role="status">Loading nearby conditions...</span></div>
     <div class="disclaimer reg-warning"><strong>Important:</strong> This educational model uses simulated repeated measurements patterned on a published school children panel study; it cannot predict an individual's health or recommend travel. Do not drive to places with worse air. Follow clinician guidance and local air-quality advice.</div>
+    <div id="demo-model-note" class="status-message" role="status" hidden></div>
 
     <div class="ontology-layout">
       <section class="ontology-inputs" aria-label="Model inputs">
         <article class="card ontology-node" id="personal-node">
           <div class="node-kicker"><span class="node-dot">1</span><span>INPUT · PERSONAL BASELINE</span></div>
-          <label class="lbl" for="personal-best">Personal-best PEF</label>
+          <label id="personal-best-label" class="lbl" for="personal-best">Personal-best PEF</label>
+        
           <div class="node-input-wrap"><input id="personal-best" type="number" min="1" max="1000" step="1" inputmode="decimal" placeholder="e.g. 400" class="input node-number" aria-describedby="personal-help input-error" /><span>L/min</span></div>
-          <p id="personal-help" class="node-help">Use the patient's established personal best. PEF stands for Peak Expiratory Flow, meaning how much air can be exhaled from the lungs in one minute.</p>
+          <p id="personal-help" class="node-help">Use the patient's established personal best. PEF stands for Peak Expiratory Flow, the fastest airflow during a forceful breath out, measured in liters per minute.</p>
           <p id="input-error" class="err" role="alert" hidden></p>
         </article>
 
         <article class="card ontology-node" id="current-node">
           <div class="node-kicker"><span class="node-dot">2</span><span>INPUT · CURRENT MEASUREMENT</span></div>
-          <label class="lbl" for="current-pef">Patient's current PEF</label>
+          <label id="current-pef-label" class="lbl" for="current-pef">Patient's current PEF</label>
           <div class="node-input-wrap"><input id="current-pef" type="number" min="1" max="1000" step="1" inputmode="decimal" placeholder="Enter measured PEF" class="input node-number" aria-describedby="current-help" /><span>L/min</span></div>
           <p id="current-help" class="node-help">Enter a recent measurement from the patient's peak-flow meter.</p>
         </article>
 
         <article class="card ontology-node live-node" id="pm25-node">
-          <div class="node-kicker"><span class="node-dot live-dot">3</span><span>LIVE DATA · OPEN-METEO</span></div>
-          <h2>Nearby city PM2.5</h2>
-          <p class="node-help">Current PM2.5 and 10 m wind speed update automatically for towns within 60 miles. Wind is supplied by Open-Meteo Weather; PM2.5 is supplied by Open-Meteo Air Quality.</p>
+          <div class="node-kicker"><span class="node-dot live-dot">3</span><span>NEARBY AIR AND WIND</span></div>
+          <h2>Nearby air conditions</h2><p><a class="text-link" href="index.html">Change your starting location</a></p>
+          <button id="refresh-conditions" type="button" class="btn">Refresh conditions</button>
+          <p id="conditions-source" class="node-help">Current PM2.5 and wind are supplied by Open-Meteo in live mode; demo scenarios replace both with simulated readings.</p>
+          <p id="origin-label" class="small muted"></p>
+
+
           <div class="live-summary"><strong id="city-count">—</strong><span>cities with readings</span><span class="live-separator">·</span><span id="origin-pm25">Origin PM2.5: —</span><span class="live-separator">·</span><span id="origin-wind">Origin wind: —</span><span class="live-separator">·</span><span id="updated-time">waiting for data</span></div>
           <details class="city-details">
             <summary>View all nearby cities</summary>
             <div class="table-responsive">
               <table class="table city-table">
                 <thead><tr><th scope="col">City</th><th scope="col">PM2.5</th><th scope="col">Wind</th><th scope="col">US AQI</th></tr></thead>
-                <tbody id="city-list"><tr><td colspan="4">Loading live readings…</td></tr></tbody>
+                <tbody id="city-list"><tr><td colspan="4">Loading readings...</td></tr></tbody>
               </table>
             </div>
           </details>
@@ -72,7 +67,7 @@
       </section>
 
       <svg class="ontology-edges" viewBox="0 0 160 620" preserveAspectRatio="none" aria-hidden="true">
-        <defs><marker id="edge-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#38bdf8" /></marker></defs>
+        <defs><marker id="edge-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--color-info)" /></marker></defs>
         <path d="M 0 85 C 85 85, 55 300, 158 300" marker-end="url(#edge-arrow)" />
         <path d="M 0 275 C 85 275, 70 320, 158 320" marker-end="url(#edge-arrow)" />
       </svg>
@@ -80,76 +75,13 @@
       <section class="card route-output" aria-labelledby="route-heading" aria-live="polite">
         <div class="node-kicker"><span class="node-dot output-dot">OUT</span><span>MODEL OUTPUT</span></div>
         <h2 id="route-heading">Best matching city &amp; route</h2>
-        <p class="node-help">Finds the available city with PM2.5 no higher than the starting location and a modeled PEF closest to 80% of personal best.</p>
-        <button id="find-route" class="btn primary reg-button" type="button" disabled>Check live cities and find route</button>
-        <p id="route-status" class="route-status" role="status">Enter both PEF measurements. Live city data is loading.</p>
-        <!-- <div class="accordion" id="pef-mode-accordion">
-          <button class="accordion-header" id="pef-mode-toggle">
-            <span class="accordion-content">
-              <span class="accordion-toggle">▶</span>
-              <span class="accordion-title">Personalized Peak Expiratory Flow (PEF) Mode</span>
-              <span class="accordion-chevron" id="pef-chevron">▶</span>
-            </span>
-          </button>
-          <div class="accordion-content">
-            <div class="accordion-inner">
-              <div class="pef-modal">
-                <div class="pef-header">
-                  <h3>Personalized Peak Expiratory Flow (PEF) Mode</h3>
-                  <button id="pef-close" class="pef-close">&times;</button>
-                </div>
-                <div class="pef-body">
-                  <div class="pef-form">
-                    <div class="pef-input-group">
-                      <label for="pef-mode-current">Current PEF:</label>
-                      <select id="pef-mode-current" class="input">
-                        <option value="250">250 L/min (reduced)</option>
-                        <option value="275">275 L/min (mild reduction)</option>
-                        <option value="300">300 L/min (personal best)</option>
-                        <option value="325">325 L/min (high)</option>
-                        <option value="350">350 L/min (peak)</option>
-                      </select>
-                    </div>
-                    <div class="pef-input-group">
-                      <label for="pef-mode-personal">Personal Best PEF:</label>
-                      <select id="pef-mode-personal" class="input">
-                        <option value="300">300 L/min (moderate)</option>
-                        <option value="400">400 L/min (good)</option>
-                        <option value="500">500 L/min (excellent)</option>
-                        <option value="350">350 L/min (average)</option>
-                      </select>
-                    </div>
-                    <div class="pef-analysis">
-                      <div id="pef-analysis-result" class="pef-result">
-                        <p><strong>Model R²:</strong> <span id="pef-mode-r2">—</span>%</p>
-                        <p><strong>Model MAE:</strong> <span id="pef-mode-mae">—</span> L/min</p>
-                        <p><strong>R² accuracy:</strong> <span id="pef-r2-accuracy">—</span>%</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div> -->
-        <!-- <div class="model-stats">
-          <div class="stat-item">
-            <span class="stat-label">Model R²:</span>
-            <span class="stat-value" id="pef-r2">—</span>
-            <span class="stat-unit">% accuracy</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">Model MAE:</span>
-            <span class="stat-value" id="pef-mae">—</span>
-            <span class="stat-unit">L/min</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">R² accuracy:</span>
-            <span class="stat-value" id="pef-r2-accuracy">—</span>
-            <span class="stat-unit">%</span>
-          </div>
-        </div> -->
+        <p class="node-help">Finds the available city with the cleanest air below the starting location first, then the modeled PEF closest to 80% of personal best.</p>
+        <button id="find-route" class="btn primary reg-button" type="button" disabled>Compare nearby cities</button>
+        <p id="route-status" class="route-status" role="status">Loading conditions and model inputs...</p>
+        
+        
         <div class="route-result" hidden>
+          <p id="result-source" class="status-message"></p>
           <div class="route-city"><span class="result-label">Best modeled match</span><strong id="destination-name">—</strong></div>
           <div class="route-metrics">
             <div><span class="result-label">Destination PM2.5</span><strong id="destination-pm25-alt">—</strong></div>
@@ -158,16 +90,58 @@
             <div><span class="result-label">Difference</span><strong id="destination-gap-alt">—</strong></div>
           </div>
           <p id="model-support-note-alt" class="support-note" hidden></p>
+          <p id="pef-advice-alt" class="support-note pef-advice" hidden></p>
           <div class="route-metrics route-meta">
             <div><span class="result-label">Drive time</span><strong id="route-duration-alt">—</strong></div>
             <div><span class="result-label">Distance</span><strong id="route-distance-alt">—</strong></div>
             <div><span class="result-label">PM2.5 trend</span><strong id="pm25-trend">—</strong></div>
           </div>
-          <a id="map-route-alt" class="btn primary map-link" href="#" target="_blank" rel="noopener noreferrer">Open driving directions (Google Maps)</a>
         </div>
-        <p class="output-caveat">This is an article-pattern synthetic panel, not original participant data. It uses a simulated effect within the article's reported range, plus assumed wind/exposure relationships, subject baselines, and measurement noise. The held-out synthetic-subject R² is negative even with PM2.5 and wind as inputs, so the model is a weak fit to this simulated panel—not an individual forecast or a medical/clean-air route recommendation.</p>
+        <div id="pef-health-warning" class="pef-health-warning" hidden>
+          <span class="warning-icon" aria-hidden="true">!</span>
+          <span class="warning-text"></span>
+        </div>
+    <section class="next-steps" aria-labelledby="next-steps-heading">
+      <h3 id="next-steps-heading">Choose your next step</h3>
+      <p class="travel-care-note">Severe breathing trouble or chest pain? Seek emergency care; do not drive yourself.</p>
+      <div class="action-card-grid" role="group" aria-label="Choose your next step">
+        <button id="stay-home" class="action-card action-home" type="button" aria-expanded="false" aria-controls="home-plan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m3 11 9-8 9 8M5 10v11h14V10M9 21v-8h6v8"/></svg><span>Stay at home</span>
+        </button>
+        <button id="choose-library" class="action-card action-library" type="button" aria-expanded="false" aria-controls="library-panel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m3 8 9-5 9 5H3Zm2 3v7m5-7v7m4-7v7m5-7v7M3 21h18M3 18h18"/></svg><span>Nearest library</span>
+        </button>
+        <button id="choose-town" class="action-card action-town" type="button" aria-expanded="false" aria-controls="town-panel" aria-label="I want to go out of town for better air">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m8 3-5 18m13-18 5 18M12 3v4m0 3v4m0 3v4"/></svg><span>Out of town</span>
+        </button>
+      </div>
+      <div id="action-warning" class="action-warning" role="status" hidden></div>
+      <div id="home-plan" class="action-panel action-detail" hidden><strong>Your indoor-air plan</strong><ul><li>Close windows and doors during smoke if it is safe and cool enough indoors.</li><li>Use recirculation and a suitable air cleaner. Avoid indoor smoke, candles, and frying.</li><li>Follow your clinician's care plan and local evacuation orders.</li><li>If your home is too hot or indoor air remains poor, check official cleaner-air spaces.</li></ul></div>
+      <div id="library-panel" class="action-panel" hidden>
+        <p class="action-detail">Take me to the nearest library. Search within 31 miles, ranked by straight-line distance.</p>
+        <button id="find-library" class="btn action-button" type="button">Find nearest library</button>
+        <div id="library-status" class="action-detail" role="status" aria-live="polite">Confirm hours, public access, and indoor air before leaving.</div>
+        <div id="library-route" hidden>
+          <div id="library-route-summary" class="action-detail" role="status" aria-live="polite"></div>
+          <div id="library-map" class="library-map" role="img" aria-label="Map previewing the driving route from your pinned location to the nearest library"></div>
+        </div>
+        <a id="library-directions" class="btn action-button" target="_blank" rel="noopener noreferrer" hidden>Directions to library</a>
+      </div>
+      <div id="town-panel" class="action-panel" hidden>
+        <p id="town-action-summary">Compare nearby cities above to see a destination and its arrival forecast.</p>
+        <div id="arrival-outlook" class="arrival-outlook" role="status" aria-live="polite">Arrival air quality has not been checked yet.</div>
+        <a id="map-route-alt" class="btn action-button" target="_blank" rel="noopener noreferrer" hidden>Review directions in Google Maps</a>
+        <details class="action-more"><summary>Forecast details &amp; travel precautions</summary><p id="arrival-details">Compare cities to check arrival conditions.</p><p>Forecasts do not assess smoke along the road, closures, or visibility. Check official alerts. A cleaner forecast does not guarantee safe travel.</p></details>
+      </div>
+    </section>
+        <p class="output-caveat">This is an article-pattern synthetic panel, not original participant data. It uses a simulated effect within the article's reported range, plus assumed wind/exposure relationships, subject baselines, and measurement noise. </p>
       </section>
     </div>
+
   </main>
+  <footer class="reg-footer">
+    <details class="prose"><summary>Understanding these results</summary><p>PM2.5 is fine particulate matter that can reach deep into the lungs. Wind and air-quality forecasts are regional model estimates, not personal exposure measurements.</p><p>Peak flow measures airflow, not oxygen levels or carbon dioxide release. Follow your clinician-provided asthma action plan; do not use this experimental model to choose treatment or delay urgent care.</p><p>Driving directions do not account for smoke along the route, visibility, closures, or evacuation orders. Check official alerts before travel.</p></details>
+  </footer>
+<footer class="site-footer"><strong>Forecasts, not medical advice.</strong> Follow local air-quality alerts and your care plan. This app cannot determine whether travel is safe. <a href="about.html">Data sources and limitations</a></footer>
 </body>
 </html>

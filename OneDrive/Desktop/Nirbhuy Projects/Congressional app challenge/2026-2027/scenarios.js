@@ -1,39 +1,41 @@
 (function(){
 /* Page 7: Demo / test smoke scenarios */
-const { useState } = React;
+const { useState, useEffect } = React;
 const T = window.Towns, Demo = window.Demo;
 const UI = window.AqiUI;
 const { SpeakBtn } = UI;
 const DISCLAIMER = 'Disclaimer: follow app recommendations at your own risk. Forecast models, not medical advice.';
 function Scenarios() {
-  const [demo, setDemo] = useState(localStorage.getItem('aqidemo') || 'live');
+  const [demo, setDemo] = useState(Demo.getMode);
   const active = Demo.SCEN.find((s) => s.id === demo) || Demo.SCEN[0];
-  const apply = (id) => { localStorage.setItem('aqidemo', id); setDemo(id); };
+  const apply = (id) => Demo.setMode(id);
+  useEffect(() => {
+    const update = () => setDemo(Demo.getMode());
+    window.addEventListener('aqi:modechange', update);
+    return () => window.removeEventListener('aqi:modechange', update);
+  }, []);
   return (
     <section>
-      <div className="row space">
-        <h2>Demo scenarios</h2>
-        <SpeakBtn label="Speak" getText={() => 'Choose a simulated smoke scenario to test every advisory branch. Current: ' + active.label + '.'} />
+      <h1>Explore a smoke scenario.</h1>
+      <p className="page-intro">Try the full experience without waiting for a smoke event. Your choice updates forecasts, health guidance, and the route model throughout the app. Your saved location is not replaced.</p>
+      <div className="card" role="status" aria-live="polite">
+        <h2>{demo === 'live' ? 'Live forecast selected' : 'Demo active: ' + active.label}</h2><p>{active.desc}</p>
+        <div className="actions"><a className="btn primary" href="index.html">See this forecast</a><a className="btn" href="advisor.html">See health guidance</a><a className="btn" href="regression.html">Explore route model</a></div>
       </div>
-      <div className="card">
-        <p>Pick a scenario, then visit any other page to see it in action. The choice is saved and applied across all pages.</p>
-        <label className="lbl">Active scenario: <b>{active.label}</b> — {active.desc}</label>
-      </div>
-      <div className="grid">
+      <div className="card-grid">
         {Demo.SCEN.map((s) => (
-          <div className="card town" key={s.id}>
-            <div className="row space"><b>{s.label}</b><span className={s.id === demo ? 'badge' : ''} style={s.id === demo ? { background: '#facc15' } : {}}>{s.id === demo ? 'ACTIVE' : ''}</span></div>
-            <div className="muted small">{s.desc}</div>
+          <div className={'card' + (s.id === demo ? ' selected' : '')} key={s.id}>
+            <h2>{s.label}</h2>
+            {s.now != null && <p className="small muted">Central Tri-Cities: AQI {s.now} now / {s.peak} peak. Wind {s.wind} km/h.</p>}
+            {s.currentPEF != null && <p className="small muted">Route demo: sample PEF {s.currentPEF} L/min, personal best {s.personalBest} L/min. Fictional inputs, not predicted health measurements.</p>}
+            <p className="muted">{s.desc}</p>
             <div className="row wrap" style={{ marginTop: 8 }}>
-              <button className={s.id === demo ? 'btn primary' : 'btn'} onClick={() => apply(s.id)}>{s.id === demo ? 'Applied' : 'Apply'}</button>
+              <button type="button" className={s.id === demo ? 'btn primary' : 'btn'} aria-pressed={s.id === demo} onClick={() => apply(s.id)}>{s.id === demo ? 'Selected' : s.id === 'live' ? 'Use live data' : 'Try this scenario'}</button>
             </div>
           </div>
         ))}
       </div>
-      <div className="muted small">Scenarios override live AQI on every page. Select "Live air (real data)" to return to real Open-Meteo readings.</div>
-      <div className="row wrap" style={{ marginTop: 10 }}>
-        <a href="index.html"><button className="btn">Go to live forecast</button></a>
-      </div>
+      <p className="muted small" style={{ marginTop: 20 }}>Demo air quality, wind, and sample PEF inputs are illustrative, not predictions. The route advisor automatically compares destinations using the selected scenario. Map tiles, address searches, and driving directions still need an internet connection. Use Return to live data at the top of any page to leave demo mode.</p>
     </section>
   );
 }

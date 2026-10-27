@@ -20,7 +20,8 @@
     { name: 'Walla Walla', lat: 46.0646, lon: -118.343 },
     { name: 'College Place', lat: 46.0462, lon: -118.386 },
     { name: 'Dayton', lat: 46.3181, lon: -117.9779 },
-    { name: 'Connell', lat: 46.0087, lon: -118.86 },
+    // Open-Meteo / GeoNames locality 5790756: Connell, Franklin County, WA.
+    { name: 'Connell', lat: 46.66347, lon: -118.86111 },
     { name: 'Mesa', lat: 46.5768, lon: -119.0 },
     { name: 'Othello', lat: 46.8266, lon: -119.177 },
     { name: 'Mattawa', lat: 46.7373, lon: -119.9083 },
@@ -56,12 +57,21 @@
     if (aqi == null || Number.isNaN(aqi)) return 'Unknown';
     if (aqi <= 50) return 'Good';
     if (aqi <= 100) return 'Moderate';
-    if (aqi <= 150) return 'USG';
+    if (aqi <= 150) return 'Unhealthy for sensitive groups';
     if (aqi <= 200) return 'Unhealthy';
     if (aqi <= 300) return 'Very Unhealthy';
     return 'Hazardous';
   }
   window.Towns = { CENTER, TOWNS, townsWithin60, haversineMiles, aqiColor, aqiLabel };
+  // Repair only a saved selection of the old, incorrectly positioned town.
+  // User-entered coordinates and map pins must never be silently relocated.
+  try {
+    const saved = JSON.parse(localStorage.getItem('aqi-house'));
+    if (saved?.label === 'Connell' && saved.lat === 46.0087 && saved.lon === -118.86) {
+      const town = TOWNS.find(t => t.name === 'Connell');
+      localStorage.setItem('aqi-house', JSON.stringify({ label: town.name, lat: town.lat, lon: town.lon }));
+    }
+  } catch (_) {}
 })();
 
 })();
